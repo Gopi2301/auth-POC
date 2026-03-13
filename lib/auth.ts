@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import db from "../src/db";
 import * as schema from "../src/db/schema";
 import { emailOTP } from "better-auth/plugins/email-otp";
+import { bearer } from "better-auth/plugins";
 import { sendEmail } from "./email";
 
 export const auth = betterAuth({
@@ -22,6 +23,7 @@ export const auth = betterAuth({
     advanced: {
         disableCSRFCheck: true, // Suggested for easier manual testing in Postman
         emailEnumerationProtection: true, // Prevent attackers from identifying registered emails
+        trustedOrigins: ["http://localhost:5173"], // Add your client URLs here
     },
     emailVerification: {
         enabled: true,
@@ -58,6 +60,7 @@ export const auth = betterAuth({
                     await sendEmail({ to: email, subject, text });
                 }
             }
-        })
+        }),
+        bearer()
     ]
 })
