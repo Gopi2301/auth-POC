@@ -2,6 +2,8 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import db from "../src/db";
 import * as schema from "../src/db/schema";
+import { emailOTP } from "better-auth/plugins/email-otp";
+import { sendEmail } from "./email";
 
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
@@ -9,9 +11,47 @@ export const auth = betterAuth({
         schema: schema,
     }),
     emailAndPassword: {
-        enabled: true
+        enabled: true,
+        requireEmailVerification: true, // Block sign-in until email is verified
     },
     advanced: {
         disableCSRFCheck: true // Suggested for easier manual testing in Postman
-    }
+    },
+    emailVerification: {
+        enabled: true,
+        autoSendOnSignup: true,
+        sendOnSignup: true,
+        sendOnPasswordReset: true,
+        sendOnEmailChange: true,
+        sendVerificationEmail: async ({ user, url, token }, request) => {
+            await sendEmail({
+                to: user.email,
+                subject: "Verify your email address",
+                text: `Click the link to verify your email: ${url}`,
+            });
+        },
+    },
+    plugins: [
+        emailOTP({
+            async sendVerificationOTP({ email, otp, type }) {
+                let subject = "";
+                let text = "";
+
+                if (type === "email-verification") {
+                    subject = "Verify your email with OTP";
+                    text = `Your verification code is: ${otp}`;
+                } else if (type === "forget-password") {
+                    subject = "Reset your password with OTP";
+                    text = `Your password reset code is: ${otp}`;
+                } else if (type === "change-email") {
+                    subject = "Change your email with OTP";
+                    text = `Your email change verification code is: ${otp}`;
+                }
+
+                if (subject) {
+                    await sendEmail({ to: email, subject, text });
+                }
+            }
+        })
+    ]
 })
