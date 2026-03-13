@@ -14,8 +14,14 @@ export const auth = betterAuth({
         enabled: true,
         requireEmailVerification: true, // Block sign-in until email is verified
     },
+    account: {
+        accountLinking: {
+            enabled: true, // Automatically link accounts with the same email
+        }
+    },
     advanced: {
-        disableCSRFCheck: true // Suggested for easier manual testing in Postman
+        disableCSRFCheck: true, // Suggested for easier manual testing in Postman
+        emailEnumerationProtection: true, // Prevent attackers from identifying registered emails
     },
     emailVerification: {
         enabled: true,
